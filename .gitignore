@@ -4,9 +4,13 @@ dbt_packages/
 logs/
 
 # 認証情報（絶対にコミットしない）
-*.json
-!package.json
+*credentials*.json
+*service_account*.json
+*key*.json
 profiles.yml
+
+# ローデータCSV（GCSが正、gitで管理しない）
+../../data/
 
 # Python
 .venv/
