@@ -4,7 +4,7 @@ sources:
   - name: olist_raw
     description: "Olist Brazilian E-Commerce ローデータ（BQにロード済みのテーブル群）"
     database: "{{ env_var('DBT_BQ_PROJECT') }}"
-    schema: olist_raw
+    schema: 01_import  # bq load で作成したデータセット名
     tables:
       - name: orders
         description: "注文ヘッダー（約99,000件）"
