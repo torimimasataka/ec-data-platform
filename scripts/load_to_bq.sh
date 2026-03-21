@@ -29,10 +29,27 @@ echo "  Bucket  : ${GCS_BUCKET}"
 echo "  Dataset : 01_import"
 echo "========================================"
 
-# ── Step 1: GCS にアップロード ──────────────────────────────────────────────
+# ── Step 1: BOM除去 & GCS にアップロード ────────────────────────────────────
 echo ""
 echo "[Step 1] Uploading CSVs to GCS..."
+
+# product_category_name_translation.csv はBOM付きUTF-8のため事前に除去
+python3 -c "
+import sys
+src = '${RAW_DIR}/product_category_name_translation.csv'
+dst = '/tmp/product_category_name_translation.csv'
+with open(src, 'rb') as f:
+    content = f.read().lstrip(b'\xef\xbb\xbf')
+with open(dst, 'wb') as f:
+    f.write(content)
+print('  BOM removed: product_category_name_translation.csv')
+"
+cp /tmp/product_category_name_translation.csv "${RAW_DIR}/product_category_name_translation_nobom.csv"
+
 gsutil -m cp "${RAW_DIR}"/*.csv "${GCS_BUCKET}/raw/"
+# BOM除去済みファイルで上書き
+gsutil cp /tmp/product_category_name_translation.csv "${GCS_BUCKET}/raw/product_category_name_translation.csv"
+rm -f "${RAW_DIR}/product_category_name_translation_nobom.csv"
 echo "  ✓ Upload complete"
 
 # ── Step 2: BQ にロード（テーブルごと）──────────────────────────────────────
@@ -49,7 +66,7 @@ declare -a TABLES=(
   "order_reviews                    olist_order_reviews_dataset.csv               order_reviews.json                   UTF-8"
   "order_payments                   olist_order_payments_dataset.csv              order_payments.json                  UTF-8"
   "geolocation                      olist_geolocation_dataset.csv                 geolocation.json                     UTF-8"
-  "product_category_name_translation product_category_name_translation.csv        product_category_name_translation.json UTF-8-BOM"
+  "product_category_name_translation product_category_name_translation.csv        product_category_name_translation.json UTF-8"
 )
 
 for entry in "${TABLES[@]}"; do
