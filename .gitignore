@@ -1,0 +1,21 @@
+# dbt
+target/
+dbt_packages/
+logs/
+
+# 認証情報（絶対にコミットしない）
+*.json
+!package.json
+profiles.yml
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/

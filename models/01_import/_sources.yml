@@ -1,0 +1,147 @@
+version: 2
+
+sources:
+  - name: olist_raw
+    description: "Olist Brazilian E-Commerce ローデータ（BQにロード済みのテーブル群）"
+    database: "{{ env_var('DBT_BQ_PROJECT') }}"
+    schema: olist_raw
+    tables:
+      - name: orders
+        description: "注文ヘッダー（約99,000件）"
+        columns:
+          - name: order_id
+            description: "注文ID（STRING）"
+          - name: customer_id
+            description: "顧客ID（STRING）"
+          - name: order_status
+            description: "注文ステータス"
+          - name: order_purchase_timestamp
+            description: "注文日時"
+          - name: order_approved_at
+            description: "承認日時"
+          - name: order_delivered_carrier_date
+            description: "配送業者への引き渡し日時"
+          - name: order_delivered_customer_date
+            description: "顧客への配達日時"
+          - name: order_estimated_delivery_date
+            description: "配達予定日"
+
+      - name: order_items
+        description: "注文明細（約112,000件）"
+        columns:
+          - name: order_id
+            description: "注文ID（STRING）"
+          - name: order_item_id
+            description: "注文明細連番"
+          - name: product_id
+            description: "商品ID（STRING）"
+          - name: seller_id
+            description: "販売者ID（STRING）"
+          - name: shipping_limit_date
+            description: "発送期限"
+          - name: price
+            description: "商品価格"
+          - name: freight_value
+            description: "送料"
+
+      - name: customers
+        description: "顧客情報（約99,000件）"
+        columns:
+          - name: customer_id
+            description: "顧客ID（STRING）"
+          - name: customer_unique_id
+            description: "顧客ユニークID（STRING）"
+          - name: customer_zip_code_prefix
+            description: "郵便番号プレフィックス"
+          - name: customer_city
+            description: "市区町村"
+          - name: customer_state
+            description: "州"
+
+      - name: products
+        description: "商品マスタ（約32,000件）"
+        columns:
+          - name: product_id
+            description: "商品ID（STRING）"
+          - name: product_category_name
+            description: "カテゴリ名（ポルトガル語）"
+          - name: product_name_lenght
+            description: "商品名文字数"
+          - name: product_description_lenght
+            description: "説明文字数"
+          - name: product_photos_qty
+            description: "写真枚数"
+          - name: product_weight_g
+            description: "重量（g）"
+          - name: product_length_cm
+            description: "長さ（cm）"
+          - name: product_height_cm
+            description: "高さ（cm）"
+          - name: product_width_cm
+            description: "幅（cm）"
+
+      - name: sellers
+        description: "販売者マスタ（約3,000件）"
+        columns:
+          - name: seller_id
+            description: "販売者ID（STRING）"
+          - name: seller_zip_code_prefix
+            description: "郵便番号プレフィックス"
+          - name: seller_city
+            description: "市区町村"
+          - name: seller_state
+            description: "州"
+
+      - name: order_reviews
+        description: "注文レビュー（約99,000件）"
+        columns:
+          - name: review_id
+            description: "レビューID（STRING）"
+          - name: order_id
+            description: "注文ID（STRING）"
+          - name: review_score
+            description: "スコア（1-5）"
+          - name: review_comment_title
+            description: "レビュータイトル"
+          - name: review_comment_message
+            description: "レビュー本文"
+          - name: review_creation_date
+            description: "レビュー作成日時"
+          - name: review_answer_timestamp
+            description: "回答日時"
+
+      - name: order_payments
+        description: "支払情報（約103,000件）"
+        columns:
+          - name: order_id
+            description: "注文ID（STRING）"
+          - name: payment_sequential
+            description: "支払連番"
+          - name: payment_type
+            description: "支払方法"
+          - name: payment_installments
+            description: "分割払い回数"
+          - name: payment_value
+            description: "支払金額"
+
+      - name: geolocation
+        description: "郵便番号×緯度経度（約100万件）"
+        columns:
+          - name: geolocation_zip_code_prefix
+            description: "郵便番号プレフィックス"
+          - name: geolocation_lat
+            description: "緯度"
+          - name: geolocation_lng
+            description: "経度"
+          - name: geolocation_city
+            description: "市区町村"
+          - name: geolocation_state
+            description: "州"
+
+      - name: product_category_name_translation
+        description: "カテゴリ翻訳マスタ（約70件）"
+        columns:
+          - name: product_category_name
+            description: "カテゴリ名（ポルトガル語）"
+          - name: product_category_name_english
+            description: "カテゴリ名（英語）"

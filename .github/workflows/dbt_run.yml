@@ -1,0 +1,69 @@
+name: dbt CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  # 将来的なスケジュール実行（コメントアウト中）
+  # schedule:
+  #   - cron: '0 1 * * *'  # 毎日 JST 10:00
+
+env:
+  DBT_BQ_PROJECT: ${{ secrets.DBT_BQ_PROJECT }}
+
+jobs:
+  dbt-run:
+    name: dbt run & test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dbt-bigquery
+        run: pip install dbt-bigquery==1.11.1
+
+      - name: Write Google credentials
+        run: |
+          echo '${{ secrets.GOOGLE_CREDENTIALS_JSON }}' > /tmp/google_credentials.json
+
+      - name: Set up dbt profiles
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml << 'EOF'
+          ec_data_platform:
+            target: prod
+            outputs:
+              prod:
+                type: bigquery
+                method: service-account
+                project: ${{ secrets.DBT_BQ_PROJECT }}
+                dataset: dbt_prod
+                location: US
+                keyfile: /tmp/google_credentials.json
+                threads: 4
+                timeout_seconds: 300
+          EOF
+
+      - name: dbt deps
+        working-directory: .
+        run: dbt deps
+
+      - name: dbt run
+        working-directory: .
+        run: dbt run --target prod
+
+      - name: dbt test
+        working-directory: .
+        run: dbt test --target prod
+
+      - name: dbt docs generate
+        working-directory: .
+        run: dbt docs generate --target prod
+        if: github.ref == 'refs/heads/main'
