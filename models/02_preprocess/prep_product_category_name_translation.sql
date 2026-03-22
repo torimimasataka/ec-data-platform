@@ -7,5 +7,5 @@
 SELECT
     product_category_name,
     product_category_name_english
-FROM {{ source('olist_raw', 'product_category_name_translation') }}
+FROM {{ ref('src_product_category_name_translation') }}
 WHERE product_category_name IS NOT NULL

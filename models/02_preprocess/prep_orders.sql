@@ -13,4 +13,4 @@ SELECT
     SAFE_CAST(order_delivered_carrier_date AS TIMESTAMP)   AS order_delivered_carrier_date,
     SAFE_CAST(order_delivered_customer_date AS TIMESTAMP)  AS order_delivered_customer_date,
     SAFE_CAST(order_estimated_delivery_date AS TIMESTAMP)  AS order_estimated_delivery_date
-FROM {{ source('olist_raw', 'orders') }}
+FROM {{ ref('src_orders') }}

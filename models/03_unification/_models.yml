@@ -1,0 +1,48 @@
+version: 2
+
+models:
+  - name: unf_order_items
+    description: "統合トランザクションテーブル。prep_order_items をベースに全マスタ（顧客・商品・販売者・支払・レビュー・位置情報）を LEFT JOIN で付与。粒度: 1行 = 1注文×1商品明細（order_id + order_item_id）。"
+    columns:
+      - name: order_id
+        description: "注文ID（STRING）"
+        tests:
+          - not_null
+      - name: order_item_id
+        description: "注文明細連番（INT64）"
+        tests:
+          - not_null
+      - name: product_id
+        description: "商品ID（STRING）"
+        tests:
+          - not_null
+      - name: seller_id
+        description: "販売者ID（STRING）"
+        tests:
+          - not_null
+      - name: customer_id
+        description: "顧客ID（STRING）"
+        tests:
+          - not_null
+      - name: order_status
+        description: "注文ステータス"
+        tests:
+          - not_null
+      - name: order_purchase_timestamp
+        description: "注文日時（TIMESTAMP）"
+        tests:
+          - not_null
+      - name: price
+        description: "商品価格（FLOAT64）"
+        tests:
+          - not_null
+      - name: freight_value
+        description: "送料（FLOAT64）"
+        tests:
+          - not_null
+      - name: review_score
+        description: "レビュースコア（1〜5・NULLあり：レビューなし注文）"
+        tests:
+          - accepted_values:
+              values: [1, 2, 3, 4, 5]
+              quote: false

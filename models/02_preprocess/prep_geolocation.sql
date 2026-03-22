@@ -12,7 +12,7 @@ WITH source AS (
         geolocation_lng,
         TRIM(LOWER(geolocation_city))                AS geolocation_city,
         UPPER(TRIM(geolocation_state))               AS geolocation_state
-    FROM {{ source('olist_raw', 'geolocation') }}
+    FROM {{ ref('src_geolocation') }}
 )
 
 SELECT

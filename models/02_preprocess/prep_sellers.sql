@@ -11,7 +11,7 @@ WITH source AS (
         CAST(seller_zip_code_prefix AS STRING)  AS seller_zip_code_prefix,
         TRIM(LOWER(seller_city))                AS seller_city,
         UPPER(TRIM(seller_state))               AS seller_state
-    FROM {{ source('olist_raw', 'sellers') }}
+    FROM {{ ref('src_sellers') }}
 )
 
 SELECT

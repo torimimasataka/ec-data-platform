@@ -12,4 +12,4 @@ SELECT
     SAFE_CAST(shipping_limit_date AS TIMESTAMP)  AS shipping_limit_date,
     SAFE_CAST(price AS FLOAT64)                  AS price,
     SAFE_CAST(freight_value AS FLOAT64)          AS freight_value
-FROM {{ source('olist_raw', 'order_items') }}
+FROM {{ ref('src_order_items') }}

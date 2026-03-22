@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: orders
+  - name: prep_orders
     description: "注文ヘッダー（クレンジング済み）。タイムスタンプ型に統一。"
     columns:
       - name: order_id
@@ -30,7 +30,7 @@ models:
       - name: order_estimated_delivery_date
         description: "配達予定日（TIMESTAMP）"
 
-  - name: order_items
+  - name: prep_order_items
     description: "注文明細（クレンジング済み）。数値・日付型に統一。"
     columns:
       - name: order_id
@@ -60,7 +60,7 @@ models:
         tests:
           - not_null
 
-  - name: customers
+  - name: prep_customers
     description: "顧客情報（クレンジング済み）。customer_city を TRIM+LOWER で表記揺れ正規化。"
     columns:
       - name: customer_id
@@ -85,7 +85,7 @@ models:
         tests:
           - not_null
 
-  - name: sellers
+  - name: prep_sellers
     description: "販売者マスタ（クレンジング済み）。seller_city を TRIM+LOWER で表記揺れ正規化。"
     columns:
       - name: seller_id
@@ -106,7 +106,7 @@ models:
         tests:
           - not_null
 
-  - name: products
+  - name: prep_products
     description: "商品マスタ（クレンジング済み）。product_category_name の NULL 約610件を 'unknown' に補完。"
     columns:
       - name: product_id
@@ -133,7 +133,7 @@ models:
       - name: product_width_cm
         description: "幅（cm）"
 
-  - name: order_reviews
+  - name: prep_order_reviews
     description: "注文レビュー（クレンジング済み）。review_id の重複 約814件を ROW_NUMBER()+QUALIFY で排除し1件に絞り込み。"
     columns:
       - name: review_id
@@ -161,7 +161,7 @@ models:
       - name: review_answer_timestamp
         description: "回答日時（TIMESTAMP）"
 
-  - name: order_payments
+  - name: prep_order_payments
     description: "支払情報（クレンジング済み）。payment_type の 'not_defined' 約3件を 'unknown' に正規化。"
     columns:
       - name: order_id
@@ -187,7 +187,7 @@ models:
         tests:
           - not_null
 
-  - name: geolocation
+  - name: prep_geolocation
     description: "郵便番号×緯度経度（クレンジング済み）。同一郵便番号の複数座標を AVG で集約し、zip_code_prefix 単位の1件に集約。"
     columns:
       - name: geolocation_zip_code_prefix
@@ -208,7 +208,7 @@ models:
       - name: geolocation_state
         description: "州（UPPER・TRIM済み）"
 
-  - name: product_category_name_translation
+  - name: prep_product_category_name_translation
     description: "カテゴリ翻訳マスタ（クレンジング済み）。NULL カテゴリ名を除外。"
     columns:
       - name: product_category_name

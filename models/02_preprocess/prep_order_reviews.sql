@@ -14,7 +14,7 @@ SELECT
     review_comment_message,
     SAFE_CAST(review_creation_date AS TIMESTAMP)        AS review_creation_date,
     SAFE_CAST(review_answer_timestamp AS TIMESTAMP)     AS review_answer_timestamp
-FROM {{ source('olist_raw', 'order_reviews') }}
+FROM {{ ref('src_order_reviews') }}
 QUALIFY ROW_NUMBER() OVER (
     PARTITION BY review_id
     ORDER BY review_answer_timestamp DESC NULLS LAST

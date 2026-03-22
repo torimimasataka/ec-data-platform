@@ -12,7 +12,7 @@ WITH source AS (
         CAST(customer_zip_code_prefix AS STRING)  AS customer_zip_code_prefix,
         TRIM(LOWER(customer_city))                AS customer_city,
         UPPER(TRIM(customer_state))               AS customer_state
-    FROM {{ source('olist_raw', 'customers') }}
+    FROM {{ ref('src_customers') }}
 )
 
 SELECT
