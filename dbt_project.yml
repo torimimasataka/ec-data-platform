@@ -19,24 +19,24 @@ models:
     # 01_import: ローデータをBigQueryに取り込み（外部テーブル or ロード済み前提）
     01_import:
       +materialized: view
-      +schema: import
+      +schema: 01_import
 
     # 02_preprocess: クレンジング・型変換・表記揺れ対応
     02_preprocess:
       +materialized: table
-      +schema: preprocess
+      +schema: 02_preprocess
 
     # 03_unification: トランザクション×マスタ統合テーブル
     03_unification:
       +materialized: table
-      +schema: unification
+      +schema: 03_unification
 
     # 04_intermediate: 分析粒度ごとの中間テーブル
     04_intermediate:
       +materialized: table
-      +schema: intermediate
+      +schema: 04_intermediate
 
     # 05_application: Looker Studio向け最終テーブル
     05_application:
       +materialized: table
-      +schema: application
+      +schema: 05_application

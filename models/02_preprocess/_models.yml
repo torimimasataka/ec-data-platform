@@ -149,9 +149,9 @@ models:
         description: "スコア（1-5、INT64）"
         tests:
           - not_null
-          - name: accepted_values
-            arguments:
+          - accepted_values:
               values: [1, 2, 3, 4, 5]
+              quote: false
       - name: review_comment_title
         description: "レビュータイトル"
       - name: review_comment_message
@@ -176,8 +176,7 @@ models:
         description: "支払方法（'not_defined' → 'unknown' 正規化済み）"
         tests:
           - not_null
-          - name: accepted_values
-            arguments:
+          - accepted_values:
               values: ['credit_card', 'boleto', 'voucher', 'debit_card', 'unknown']
       - name: payment_installments
         description: "分割払い回数（INT64）"
