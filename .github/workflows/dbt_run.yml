@@ -57,11 +57,13 @@ jobs:
 
       - name: dbt run
         working-directory: .
-        run: dbt run --target prod
+        # 01_import は bq load 済みの永続生テーブルを参照するだけの VIEW 層。
+        # CI では変換ロジック（02_preprocess 以降）のみ再実行する。
+        run: dbt run --target prod --select 02_preprocess+
 
       - name: dbt test
         working-directory: .
-        run: dbt test --target prod
+        run: dbt test --target prod --select 02_preprocess+
 
       - name: dbt docs generate
         working-directory: .
