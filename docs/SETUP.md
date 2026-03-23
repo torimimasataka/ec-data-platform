@@ -19,11 +19,25 @@
 ### 1-1. Python仮想環境 & dbtインストール
 
 ```bash
-cd ec-data-platform
-python3 -m venv .venv
+cd ~/Developer/ec-data-platform
+python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -r ec_data_platform/requirements.txt
 ```
+
+> **Anaconda環境を使っている場合：**
+> `PATH` の優先順位により `.venv` より Anaconda の `dbt` が優先されることがある。
+> 以下のエイリアスを `~/.bash_profile` または `~/.zshrc` に追加して `.venv` の dbt を使うようにする。
+>
+> ```bash
+> alias dbt="/Users/torimimasataka/Developer/ec-data-platform/.venv/bin/dbt"
+> ```
+>
+> `which dbt` ではエイリアスは表示されないが、`type dbt` で確認できる。
+
+> **プロジェクトを移動した場合：**
+> `.venv` 内のスクリプトには作成時のパスがハードコードされるため、フォルダ移動後は
+> `.venv` を削除して上記コマンドで再作成すること。
 
 ### 1-2. GCP認証（ローカルdbt用）
 
@@ -175,3 +189,5 @@ CIの目的は「変換ロジックが壊れていないか検証すること」
 | `Table 01_import.orders was not found` | 生テーブルが削除されている（GCSがソースなので復元可能） | `load_to_bq.sh` を再実行 |
 | ワークフローが起動しない | `.github/workflows/` がリポジトリルートにない | ルートの `.github/workflows/` に移動 |
 | ローカルではdbt動くがCIで動かない | ローカルはADC、CIはサービスアカウントが必要 | 3節のサービスアカウント設定を実施 |
+| フォルダ移動後に `dbt` が動かない | `.venv` 内スクリプトに旧パスがハードコード | `.venv` を削除し `python3.12 -m venv .venv && .venv/bin/pip install dbt-bigquery==1.11.1` で再作成（`source activate` 後に `pip` を使うと Anaconda 側にインストールされるので直接パス指定で実行すること） |
+| `Env var required but not provided: 'DBT_BQ_PROJECT'` | 環境変数が未設定 | `export DBT_BQ_PROJECT=ec-data-platform-2026` を実行（または `.bash_profile`/`.zshrc` に追記） |
