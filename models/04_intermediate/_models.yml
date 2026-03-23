@@ -1,0 +1,323 @@
+version: 2
+
+models:
+
+  - name: t_customer_monthly
+    description: "粒度: 1行 = 1顧客(customer_unique_id) × 1年月(year_month)。月次RFM基礎値・主カテゴリ・フラグを確定させる。対象: order_status = 'delivered'。"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - customer_unique_id
+              - year_month
+    columns:
+      - name: customer_unique_id
+        description: "顧客ID（真のユニーク顧客ID）"
+        tests:
+          - not_null
+      - name: year_month
+        description: "年月（YYYY-MM形式）"
+        tests:
+          - not_null
+      - name: sum_price_month
+        description: "月内商品金額合計"
+        tests:
+          - not_null
+      - name: cnt_orders_month
+        description: "月内注文件数（DISTINCT order_id）"
+        tests:
+          - not_null
+      - name: is_active_month
+        description: "月内購入あり（sum_price_month > 0）"
+        tests:
+          - not_null
+
+  - name: t_customer_all
+    description: "粒度: 1行 = 1顧客(customer_unique_id)（全期間集計）。RFM指標・主カテゴリ・主支払方法・カテゴリ一覧を確定させる。対象: order_status = 'delivered'。"
+    columns:
+      - name: customer_unique_id
+        description: "顧客ID（主キー）"
+        tests:
+          - not_null
+          - unique
+      - name: sum_price_all
+        description: "総購入金額（Monetary）"
+        tests:
+          - not_null
+      - name: cnt_orders_all
+        description: "総注文件数（Frequency）"
+        tests:
+          - not_null
+      - name: recency_days
+        description: "最終購入からの経過日数（データ最終日基準）（Recency）"
+        tests:
+          - not_null
+      - name: is_repeat_customer
+        description: "リピーター（cnt_orders_all > 1）"
+        tests:
+          - not_null
+
+  - name: t_category_monthly
+    description: "粒度: 1行 = 1カテゴリ(product_category_name_english) × 1年月(year_month)。カテゴリ別の月次売上・注文・顧客・販売者数・シェアを確定させる。対象: order_status = 'delivered'。"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - product_category_name_english
+              - year_month
+    columns:
+      - name: product_category_name_english
+        description: "商品カテゴリ名（英語）"
+        tests:
+          - not_null
+      - name: year_month
+        description: "年月（YYYY-MM形式）"
+        tests:
+          - not_null
+      - name: sum_price_month
+        description: "カテゴリ月次売上"
+        tests:
+          - not_null
+      - name: rate_price_in_all_month
+        description: "月内の全カテゴリ売上シェア（0〜1）"
+
+  - name: t_seller_monthly
+    description: "粒度: 1行 = 1販売者(seller_id) × 1年月(year_month)。販売者別の月次売上・注文・顧客数・主カテゴリを確定させる。対象: order_status = 'delivered'。"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - seller_id
+              - year_month
+    columns:
+      - name: seller_id
+        description: "販売者ID"
+        tests:
+          - not_null
+      - name: year_month
+        description: "年月（YYYY-MM形式）"
+        tests:
+          - not_null
+      - name: sum_price_month
+        description: "月次売上"
+        tests:
+          - not_null
+
+  - name: t_seller_all
+    description: "粒度: 1行 = 1販売者(seller_id)（全期間集計）。t_customer_all の販売者版。売上・顧客数・主カテゴリ・カテゴリ一覧を確定させる。対象: order_status = 'delivered'。"
+    columns:
+      - name: seller_id
+        description: "販売者ID（主キー）"
+        tests:
+          - not_null
+          - unique
+      - name: sum_price_all
+        description: "総売上"
+        tests:
+          - not_null
+      - name: cnt_orders_all
+        description: "総注文件数"
+        tests:
+          - not_null
+      - name: cnt_unique_customers_all
+        description: "ユニーク顧客数"
+        tests:
+          - not_null
+
+  - name: t_customer_category_all
+    description: "粒度: 1行 = 1顧客(customer_unique_id) × 1カテゴリ(product_category_name_english)（全期間）。購入金額・件数・シェア・主カテゴリ判定を確定させる。クロスセル・カテゴリアフィニティ分析の基礎テーブル。対象: order_status = 'delivered'。"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - customer_unique_id
+              - product_category_name_english
+    columns:
+      - name: customer_unique_id
+        description: "顧客ID"
+        tests:
+          - not_null
+      - name: product_category_name_english
+        description: "商品カテゴリ名（英語）"
+        tests:
+          - not_null
+      - name: sum_price_cat_all
+        description: "カテゴリ内購入金額合計"
+        tests:
+          - not_null
+      - name: rate_price_cat_in_all
+        description: "顧客の全購入に対するカテゴリシェア（0〜1）"
+      - name: is_main_category_all
+        description: "主カテゴリ（金額1位 かつ シェア > 50%）"
+        tests:
+          - not_null
+
+  - name: t_state_monthly
+    description: "粒度: 1行 = 1顧客州(customer_state) × 1年月(year_month)。州別の月次売上・注文・顧客数・シェアを確定させる。地域ヒートマップ分析用。対象: order_status = 'delivered'。"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - customer_state
+              - year_month
+    columns:
+      - name: customer_state
+        description: "顧客の州（ブラジル州コード）"
+        tests:
+          - not_null
+      - name: year_month
+        description: "年月（YYYY-MM形式）"
+        tests:
+          - not_null
+      - name: sum_price_month
+        description: "州月次売上"
+        tests:
+          - not_null
+
+  - name: t_order_kpi_monthly
+    description: "粒度: 1行 = 1年月(year_month)（ビジネス全体の月次KPI）。売上・注文件数・顧客数・新規/リピーター・AOV・APV・リテンション率・平均レビューを確定させる。対象: order_status = 'delivered'。"
+    columns:
+      - name: year_month
+        description: "年月（YYYY-MM形式・主キー）"
+        tests:
+          - not_null
+          - unique
+      - name: sum_price_month
+        description: "月次売上合計"
+        tests:
+          - not_null
+      - name: cnt_orders_month
+        description: "月次注文件数（DISTINCT order_id）"
+        tests:
+          - not_null
+      - name: cnt_order_items_month
+        description: "月次明細件数"
+        tests:
+          - not_null
+      - name: cnt_active_customers_month
+        description: "月内アクティブ顧客数（DISTINCT customer_unique_id）"
+        tests:
+          - not_null
+      - name: cnt_new_customers_month
+        description: "新規顧客数（その月が初回購入月の顧客数）"
+        tests:
+          - not_null
+      - name: cnt_repeat_customers_month
+        description: "リピーター顧客数（初回購入月以外に購入した顧客数）"
+        tests:
+          - not_null
+      - name: aov_month
+        description: "AOV = sum_price_month / cnt_orders_month（注文あたり平均売上）"
+      - name: apv_month
+        description: "APV = sum_price_month / cnt_order_items_month（明細あたり平均単価）"
+      - name: avg_orders_per_customer_month
+        description: "顧客あたり平均注文数 = cnt_orders_month / cnt_active_customers_month"
+      - name: repeat_customer_rate_month
+        description: "リピーター率 = cnt_repeat_customers_month / cnt_active_customers_month（0〜1）"
+      - name: avg_review_score_month
+        description: "平均レビュースコア（order_id 単位で重複排除後に平均）"
+
+  - name: t_cohort_monthly
+    description: "粒度: 1行 = 1コホート(first_purchase_month) × 1計測月(year_month)。初回購入月別のリテンション分析用テーブル。year_month >= first_purchase_month の行のみ。対象: order_status = 'delivered'。"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - first_purchase_month
+              - year_month
+    columns:
+      - name: first_purchase_month
+        description: "コホート（初回購入月・YYYY-MM形式・複合PK①）"
+        tests:
+          - not_null
+      - name: year_month
+        description: "計測月（YYYY-MM形式・複合PK②）"
+        tests:
+          - not_null
+      - name: months_since_first
+        description: "初回購入月からの経過月数（0=初月）"
+        tests:
+          - not_null
+      - name: cnt_customers_cohort
+        description: "コホートの初期顧客数（first_purchase_month ごとのユニーク顧客数・全期間固定値）"
+        tests:
+          - not_null
+      - name: cnt_active_customers
+        description: "その計測月のアクティブ顧客数"
+        tests:
+          - not_null
+      - name: retention_rate
+        description: "リテンション率 = cnt_active_customers / cnt_customers_cohort（0〜1）"
+      - name: sum_price
+        description: "コホートのその月の売上合計"
+      - name: avg_price_per_active_customer
+        description: "アクティブ顧客あたり売上 = sum_price / cnt_active_customers"
+
+  - name: t_product_monthly
+    description: "粒度: 1行 = 1商品(product_id) × 1年月(year_month)。商品別の月次売上・注文・顧客数・平均単価・平均レビューを確定させる。対象: order_status = 'delivered'。"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - product_id
+              - year_month
+    columns:
+      - name: product_id
+        description: "商品ID（複合PK①）"
+        tests:
+          - not_null
+      - name: year_month
+        description: "年月（YYYY-MM形式・複合PK②）"
+        tests:
+          - not_null
+      - name: product_category_name_english
+        description: "商品カテゴリ名（英語・ANY_VALUE で取得）"
+      - name: sum_price_month
+        description: "月次売上合計"
+        tests:
+          - not_null
+      - name: cnt_orders_month
+        description: "月次注文件数（DISTINCT order_id）"
+        tests:
+          - not_null
+      - name: cnt_order_items_month
+        description: "月次明細件数（同一注文内の複数購入を含む）"
+        tests:
+          - not_null
+      - name: cnt_unique_customers_month
+        description: "ユニーク顧客数"
+        tests:
+          - not_null
+      - name: avg_item_price_month
+        description: "平均単価 = sum_price_month / cnt_order_items_month"
+      - name: avg_review_score_month
+        description: "平均レビュースコア（order_id 単位で重複排除後に平均）"
+
+  - name: t_delivery_monthly
+    description: "粒度: 1行 = 1年月(year_month)（配送パフォーマンス月次KPI）。配達完了注文数・平均/中央値配送日数・オンタイム率・遅延件数・平均レビューを確定させる。year_month は order_purchase_timestamp ベース。対象: order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL。"
+    columns:
+      - name: year_month
+        description: "年月（YYYY-MM形式・主キー）"
+        tests:
+          - not_null
+          - unique
+      - name: cnt_delivered_orders_month
+        description: "配達完了注文数（DISTINCT order_id）"
+        tests:
+          - not_null
+      - name: avg_delivery_days_month
+        description: "平均配送日数（order_purchase_timestamp → order_delivered_customer_date）"
+        tests:
+          - not_null
+      - name: p50_delivery_days_month
+        description: "中央値配送日数（APPROX_QUANTILES(delivery_days, 100)[OFFSET(50)]）"
+      - name: on_time_rate_month
+        description: "オンタイム率（実際配達日 ≤ 予定配達日の割合・0〜1）"
+      - name: cnt_late_orders_month
+        description: "遅延件数（実際配達日 > 予定配達日）"
+        tests:
+          - not_null
+      - name: avg_days_diff_vs_estimate_month
+        description: "実際-予定の平均日数差（正=遅延、負=早着）"
+      - name: avg_review_score_month
+        description: "平均レビュースコア（order_id 単位で重複排除後に平均）"

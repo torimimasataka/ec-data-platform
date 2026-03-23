@@ -35,6 +35,9 @@ models:
     04_intermediate:
       +materialized: table
       +schema: 04_intermediate
+      +persist_docs:
+        relation: true
+        columns: true
 
     # 05_application: Looker Studio向け最終テーブル
     05_application:

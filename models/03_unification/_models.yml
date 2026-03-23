@@ -44,5 +44,6 @@ models:
         description: "レビュースコア（1〜5・NULLあり：レビューなし注文）"
         tests:
           - accepted_values:
-              values: [1, 2, 3, 4, 5]
-              quote: false
+              arguments:
+                values: [1, 2, 3, 4, 5]
+                quote: false

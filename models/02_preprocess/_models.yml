@@ -150,8 +150,9 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: [1, 2, 3, 4, 5]
-              quote: false
+              arguments:
+                values: [1, 2, 3, 4, 5]
+                quote: false
       - name: review_comment_title
         description: "レビュータイトル"
       - name: review_comment_message
@@ -177,7 +178,8 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['credit_card', 'boleto', 'voucher', 'debit_card', 'unknown']
+              arguments:
+                values: ['credit_card', 'boleto', 'voucher', 'debit_card', 'unknown']
       - name: payment_installments
         description: "分割払い回数（INT64）"
         tests:
