@@ -1,16 +1,16 @@
 # dbt
-ec_data_platform/target/
-ec_data_platform/dbt_packages/
-ec_data_platform/logs/
+target/
+dbt_packages/
+logs/
 
 # 認証情報（絶対にコミットしない）
 *credentials*.json
 *service_account*.json
 *key*.json
-ec_data_platform/profiles.yml
+profiles.yml
 
 # ローデータCSV（GCSが正、gitで管理しない）
-data/
+../../data/
 
 # Python
 .venv/
@@ -19,11 +19,7 @@ __pycache__/
 
 # macOS
 .DS_Store
-**/.DS_Store
 
 # IDE
 .idea/
 .vscode/
-
-# logs
-logs/
