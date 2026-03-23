@@ -54,11 +54,14 @@ cd ec_data_platform
 bash scripts/load_to_bq.sh
 ```
 
-> **重要：`01_import` の生テーブルは削除しない**
+> **ソース・オブ・トゥルースはGCS**
 >
-> `load_to_bq.sh` が作成する生テーブル（`orders`, `order_items` など）は
-> `src_*` VIEW の参照先。削除すると全層のdbt実行が壊れる。
-> データはGCSにもバックアップされているため、誤って削除した場合は再実行する。
+> ローデータの正本は `gs://ec-data-platform-raw/raw/` のCSV。
+> BQの `01_import` 生テーブルはGCSからロードしたキャッシュであり、
+> 削除しても `load_to_bq.sh` を再実行すれば復元できる。
+>
+> ただし生テーブルが存在しない間は `src_*` VIEW が壊れ、CI含め全層のdbt実行が失敗する。
+> 削除するなら復元まで一緒に行うこと。
 
 ### 2-2. BQリージョン
 
@@ -169,6 +172,6 @@ CIの目的は「変換ロジックが壊れていないか検証すること」
 | CIが6秒で失敗 | GitHub Secretsが未設定 | `gh secret set` で2つ設定 |
 | `requirements.txt not found` エラー | `cache: pip` があるのに `requirements.txt` がない | `ec_data_platform/requirements.txt` を作成 |
 | `Dataset not found in location US` | profiles.yml の location が `US` になっている | `asia-northeast1` に修正 |
-| `Table 01_import.orders was not found` | 生テーブルが削除されている | `load_to_bq.sh` を再実行 |
+| `Table 01_import.orders was not found` | 生テーブルが削除されている（GCSがソースなので復元可能） | `load_to_bq.sh` を再実行 |
 | ワークフローが起動しない | `.github/workflows/` がリポジトリルートにない | ルートの `.github/workflows/` に移動 |
 | ローカルではdbt動くがCIで動かない | ローカルはADC、CIはサービスアカウントが必要 | 3節のサービスアカウント設定を実施 |
