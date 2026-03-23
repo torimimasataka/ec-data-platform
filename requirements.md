@@ -125,7 +125,9 @@
 
 ### 05_application（分析テーブル）設計方針
 - Looker Studio向けに横持ち・フラグ化・集計を最適化したテーブルを配置
-- `03_unification` と `04_intermediate` を入力とする
+- `04_intermediate` を主ソースとし、明細ドリルダウンのみ `03_unification` を参照する
+- **1ページ1マート原則** — ダッシュボードの各ページに対応するテーブルを用意し、Looker Studio側でのJOIN・集計を排除する
+- 詳細設計は **[docs/EC-8_requirements.md](./EC-8_requirements.md)** を参照
 
 ---
 

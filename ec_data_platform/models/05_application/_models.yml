@@ -1,0 +1,243 @@
+version: 2
+
+models:
+
+  - name: app_summary_kpi
+    description: "ダッシュボード: サマリ（概況）ページ。粒度: 1行 = 1年月。KPIカード・月次トレンド・YTD用。ソース: t_order_kpi_monthly。"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - year_month
+    columns:
+      - name: year_month
+        description: "年月（YYYY-MM形式）"
+        tests:
+          - not_null
+          - unique
+      - name: order_month
+        description: "年月（DATE型）Looker Studioの期間フィルター用"
+        tests:
+          - not_null
+      - name: sum_price_month
+        description: "月次売上合計"
+      - name: cnt_orders_month
+        description: "月次注文数"
+      - name: cnt_active_customers_month
+        description: "月次ユニーク顧客数"
+      - name: sum_revenue_ytd
+        description: "年累計売上（YTD）"
+      - name: cnt_orders_ytd
+        description: "年累計注文数（YTD）"
+
+  - name: app_sales_trend
+    description: "ダッシュボード: 売上・トレンド分析ページ。粒度: 1行 = 1カテゴリ × 1年月。前年同月比（YoY）・月次ランキング付き。ソース: t_category_monthly。"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - product_category_name_english
+              - year_month
+    columns:
+      - name: product_category_name_english
+        description: "カテゴリ名（英語）"
+        tests:
+          - not_null
+      - name: year_month
+        description: "年月（YYYY-MM形式）"
+        tests:
+          - not_null
+      - name: rank_revenue_month
+        description: "月次売上ランキング（1位が最高売上）"
+      - name: rate_yoy_revenue
+        description: "前年同月比（小数: 0.1 = +10%）"
+
+  - name: app_customer_rfm
+    description: "ダッシュボード: 顧客分析ページ（RFMセグメント分布）。粒度: 1行 = 1顧客。RFMスコア・セグメントラベル付き。ソース: t_customer_all。"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - customer_unique_id
+    columns:
+      - name: customer_unique_id
+        description: "顧客ID（真のユニーク顧客ID）"
+        tests:
+          - not_null
+          - unique
+      - name: rfm_segment
+        description: "RFMセグメントラベル（Champions / Loyal / Promising / Need Attention / At Risk / Cannot Lose / Hibernating）"
+        tests:
+          - not_null
+      - name: rfm_total_score
+        description: "RFMスコア合計（3〜12）"
+
+  - name: app_cohort_retention
+    description: "ダッシュボード: 顧客分析ページ（コホートリテンション）。粒度: 1行 = 1コホート月 × 1計測月。ソース: t_cohort_monthly。"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - first_purchase_month
+              - year_month
+    columns:
+      - name: first_purchase_month
+        description: "コホート月（初回購入月、YYYY-MM形式）"
+        tests:
+          - not_null
+      - name: year_month
+        description: "計測月（YYYY-MM形式）"
+        tests:
+          - not_null
+      - name: retention_rate
+        description: "リテンション率（0〜1）"
+      - name: months_since_first
+        description: "初回購入からの経過月数"
+
+  - name: app_category_performance
+    description: "ダッシュボード: 商品・カテゴリ分析ページ。粒度: 1行 = 1カテゴリ × 1年月。月次ランキング・全期間ランキング付き。ソース: t_category_monthly。"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - product_category_name_english
+              - year_month
+    columns:
+      - name: product_category_name_english
+        description: "カテゴリ名（英語）"
+        tests:
+          - not_null
+      - name: year_month
+        description: "年月（YYYY-MM形式）"
+        tests:
+          - not_null
+      - name: rank_revenue_month
+        description: "月次売上ランキング"
+      - name: rank_revenue_all_time
+        description: "全期間売上ランキング"
+
+  - name: app_geo_summary
+    description: "ダッシュボード: 地域分析ページ。粒度: 1行 = 1州 × 1年月。ISO州コード・州名付き。ソース: t_state_monthly。"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - customer_state
+              - year_month
+    columns:
+      - name: customer_state
+        description: "州コード（2文字）"
+        tests:
+          - not_null
+      - name: year_month
+        description: "年月（YYYY-MM形式）"
+        tests:
+          - not_null
+      - name: state_code_iso
+        description: "ISO形式の州コード（BR-SP 等）Looker Studioジオマップ用"
+        tests:
+          - not_null
+
+  - name: app_delivery_quality
+    description: "ダッシュボード: 配送・品質分析ページ。粒度: 1行 = 1年月。配送日数・オンタイム率・レビュースコア。ソース: t_delivery_monthly。"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - year_month
+    columns:
+      - name: year_month
+        description: "年月（YYYY-MM形式）"
+        tests:
+          - not_null
+          - unique
+      - name: on_time_rate_month
+        description: "オンタイム配送率（0〜1）"
+      - name: late_rate_month
+        description: "遅延率（0〜1）"
+
+  - name: app_daily_kpi
+    description: "ダッシュボード: 日次トレンド分析ページ。粒度: 1行 = 1日。7日・30日移動平均付き。ソース: unf_order_items。"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - order_date
+    columns:
+      - name: order_date
+        description: "注文日（DATE型）"
+        tests:
+          - not_null
+          - unique
+      - name: sum_revenue_7d_ma
+        description: "売上7日移動平均"
+      - name: sum_revenue_30d_ma
+        description: "売上30日移動平均"
+      - name: day_of_week_name
+        description: "曜日名（English: Monday〜Sunday）"
+
+  - name: app_daily_category
+    description: "ダッシュボード: 時系列分析ページ（カテゴリ別日次）。粒度: 1行 = 1カテゴリ × 1日。Looker Studioのカテゴリフィルターで時系列比較。ソース: unf_order_items。"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - order_date
+              - product_category_name_english
+    columns:
+      - name: order_date
+        description: "注文日（DATE型）"
+        tests:
+          - not_null
+      - name: product_category_name_english
+        description: "カテゴリ名（英語）。未分類は 'Unknown'"
+        tests:
+          - not_null
+      - name: sum_revenue_7d_ma
+        description: "カテゴリ別売上7日移動平均"
+
+  - name: app_hourly_kpi
+    description: "ダッシュボード: 時間帯・曜日分析ページ。粒度: 1行 = 1時間帯(0〜23) × 1曜日(1〜7)。全期間集計のヒートマップ用。ソース: unf_order_items。"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - hour_of_day
+              - day_of_week_num
+    columns:
+      - name: hour_of_day
+        description: "時間帯（0〜23）"
+        tests:
+          - not_null
+      - name: day_of_week_num
+        description: "曜日番号（1=日曜〜7=土曜、BigQuery DAYOFWEEK準拠）"
+        tests:
+          - not_null
+      - name: cnt_orders_normalized
+        description: "注文数の正規化値（0〜1）ヒートマップ強度用"
+      - name: sum_revenue_normalized
+        description: "売上の正規化値（0〜1）ヒートマップ強度用"
+
+  - name: app_order_detail
+    description: "ダッシュボード: 注文明細（ドリルダウン）ページ。粒度: 1行 = 1注文明細。05_application で唯一 03_unification を参照。各ページからのクロスフィルター対応。"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - order_id
+              - order_item_id
+    columns:
+      - name: order_id
+        description: "注文ID"
+        tests:
+          - not_null
+      - name: order_item_id
+        description: "注文明細ID"
+        tests:
+          - not_null
+      - name: sum_revenue
+        description: "明細売上（price + freight_value）"
+      - name: is_on_time
+        description: "オンタイム配送フラグ"
+      - name: is_repeat_customer
+        description: "リピーター顧客フラグ（注文数 > 1）"
