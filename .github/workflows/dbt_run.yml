@@ -45,7 +45,7 @@ jobs:
                 method: service-account
                 project: ${{ secrets.DBT_BQ_PROJECT }}
                 dataset: dbt_prod
-                location: US
+                location: asia-northeast1
                 keyfile: /tmp/google_credentials.json
                 threads: 4
                 timeout_seconds: 300
