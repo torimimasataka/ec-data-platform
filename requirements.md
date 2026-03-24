@@ -17,8 +17,8 @@
 ローデータCSV投入
 　↓ ① データ調査・ドキュメント自動生成
 　↓ ② GATE 5層構造に基づくBigQuery基盤構築（dbt管理）
-　↓ ③ Looker Studio サマリダッシュボード
-　↓ ④ テーブル定義書・ダッシュボードドキュメントをGitHub / Notionに自動生成
+　↓ ③ Streamlit ダッシュボード（Python + Plotly）
+　↓ ④ テーブル定義書をGitHub / Notionに自動生成
 ```
 
 ---
@@ -56,7 +56,7 @@
 　↓
 [BigQuery] ← dbt で変換・管理（GATE 5層構造）
 　↓
-[Looker Studio] ← ダッシュボード
+[Streamlit] ← ダッシュボード（Python + Plotly）
 　↓
 [GitHub] ← コード管理 / ドキュメント（Markdown）
 [Notion]  ← ドキュメント（人が読むUI層）
@@ -71,7 +71,7 @@
 | 変換・管理 | dbt Core |
 | CI/CD | GitHub Actions |
 | コード管理 | GitHub |
-| 可視化 | Looker Studio |
+| 可視化 | Streamlit + Plotly（Python） |
 | ドキュメント | GitHub（Markdown）+ Notion（MCP連携） |
 
 ### GCPプロジェクト
@@ -90,7 +90,7 @@
 | DWH層 | `02_preprocess` | クレンジング・表記揺れ対応・計算カラム追加 |
 | DM層（統合） | `03_unification` | トランザクション×マスタの統合テーブル生成 |
 | DM層（集計） | `04_intermediate` | 分析粒度ごとの中間テーブル（一次・二次属性） |
-| DM層（分析） | `05_application` | 可視化・Looker Studio向けの最終テーブル |
+| DM層（分析） | `05_application` | 可視化向けの最終テーブル（Streamlit 各ページに1テーブル対応） |
 
 ### 03_unification（統合テーブル）設計方針
 - `orders` × `order_items` × `customers` × `products` × `sellers` × `order_payments` × `order_reviews` をJOINした統合トランザクションテーブルを作成
@@ -124,9 +124,9 @@
 > **注意:** `sum_payment_value` は注文単位集約済みのため、order_item_id粒度で集計すると重複する。明細金額の集計には `price` + `freight_value` を使う。
 
 ### 05_application（分析テーブル）設計方針
-- Looker Studio向けに横持ち・フラグ化・集計を最適化したテーブルを配置
+- 横持ち・フラグ化・集計を最適化したテーブルを配置
 - `04_intermediate` を主ソースとし、明細ドリルダウンのみ `03_unification` を参照する
-- **1ページ1マート原則** — ダッシュボードの各ページに対応するテーブルを用意し、Looker Studio側でのJOIN・集計を排除する
+- **1ページ1マート原則** — Streamlit の各ページに対応するテーブルを1つ用意し、Python側でのJOIN・集計を排除する
 - 詳細設計は **[docs/EC-8_requirements.md](./EC-8_requirements.md)** を参照
 
 ---
@@ -258,32 +258,35 @@ dbt test --select 02_preprocess+
 
 ---
 
-## 8. ダッシュボード設計（Looker Studio）
+## 8. ダッシュボード設計（Streamlit）
+
+### 技術構成
+- **言語:** Python
+- **フレームワーク:** Streamlit
+- **チャートライブラリ:** Plotly（go / make_subplots）
+- **データ接続:** `google-cloud-bigquery` → BigQuery `05_application` 層に直接クエリ
+- **コード:** `streamlit_app/app.py`
 
 ### デザイン方針
-- **白背景ベースのミニマルデザイン**
-- 使用コンポーネント：KPIカード・時系列折れ線グラフ・ドーナツ円グラフ・表（ランキング）
-- チャートの種類はケースバイケースで選択（指標の性質に合わせる）
-- 参考：GA4サマリーレポートのレイアウト（カード列 → 時系列 → セグメント別ドーナツ+表の2カラム）
+- 白背景・ミニマルデザイン（余白多め、情報密度を抑える）
+- カラーパレット: プライマリ `#E8743B`（Orange）、ポジティブ `#2E7D32`（Green）、ネガティブ `#CC3333`（Red）
+- フォント: Helvetica Neue
 
-### フェーズ1：サマリダッシュボード（初回スコープ）
+### ダッシュボード構成（11ページ）
 
-1ページ構成のサマリダッシュボード。以下の指標を含む：
-
-| セクション | 指標 |
-|---|---|
-| 売上サマリ | 総売上・総注文数・平均注文単価 |
-| 時系列トレンド | 月次売上推移・注文数推移 |
-| 年次比較 | 年次売上・成長率 |
-| 顧客サマリ | ユニーク顧客数・新規/リピート比率 |
-| 商品サマリ | カテゴリ別売上Top10 |
-| 地域サマリ | 州別注文数ヒートマップ（ブラジル） |
-
-### フェーズ2以降（運用フェーズで追加）
-- 顧客セグメント分析ページ（RFMセグメント）
-- 商品カテゴリ詳細ページ
-- 地域別詳細ページ
-- レビュー・満足度分析ページ
+| Page | タイトル | データソース | ステータス |
+|---|---|---|---|
+| 1 | サマリ（概況） | `app_summary_kpi`, `app_category_customer_kpi`, `app_state_customer_kpi` | 実装中（ブラッシュアップ中） |
+| 2 | 売上・トレンド分析 | `app_sales_trend` | 未着手 |
+| 3 | 顧客分析（RFMセグメント） | `app_customer_rfm` | 未着手 |
+| 4 | 顧客分析（コホートリテンション） | `app_cohort_retention` | 未着手 |
+| 5 | 商品・カテゴリ分析 | `app_category_performance` | 未着手 |
+| 6 | 地域分析 | `app_geo_summary` | 未着手 |
+| 7 | 配送・品質分析 | `app_delivery_quality` | 未着手 |
+| 8 | 注文明細（ドリルダウン） | `app_order_detail` | 未着手 |
+| 9 | 日次トレンド分析 | `app_daily_kpi` | 未着手 |
+| 10 | カテゴリ別日次時系列 | `app_daily_category` | 未着手 |
+| 11 | 時間帯・曜日分析（ヒートマップ） | `app_hourly_kpi` | 未着手 |
 
 ---
 
@@ -302,7 +305,6 @@ dbt test --select 02_preprocess+
 　├── 📄 プロジェクト概要
 　├── 📄 ローデータ調査レポート
 　├── 🗄️ テーブル定義書DB（テーブル名・層・粒度・説明・更新日）
-　├── 🗄️ ダッシュボードドキュメントDB（ページ名・指標・データソース）
 　└── 🗄️ チケット管理DB（タスク・ステータス・優先度・担当・期日）
 ```
 
@@ -325,16 +327,15 @@ dbt test --select 02_preprocess+
 | 7 | 04_intermediate: 中間テーブル作成 | dbt models |
 | 8 | 05_application: 分析テーブル作成 | dbt models |
 | 9 | GitHub Actions設定 | CI/CDパイプライン |
-| 10 | Looker Studioサマリダッシュボード作成 | ダッシュボード |
+| 10 | Streamlit ダッシュボード構築（全11ページ） | streamlit_app/ |
 | 11 | テーブル定義書生成 | Markdown + Notion |
-| 12 | ダッシュボードドキュメント生成 | Notion |
 
 ---
 
 ## 11. 将来フェーズ（フェーズ2以降）
 
 - 定期データ更新フロー（新規CSVの差分取り込み・BQ MERGE）
-- ダッシュボード追加（顧客セグメント・カテゴリ詳細・地域詳細）
+- Streamlit ダッシュボードのデプロイ（Streamlit Community Cloud または Cloud Run）
 - メンバー共有・権限管理フロー
 - 分析インサイトのGmail自動送信フロー（Gmail MCP連携）
 - Cloud Schedulerによるスケジュール実行
@@ -344,6 +345,5 @@ dbt test --select 02_preprocess+
 ## 12. 未決事項・TODO
 
 - [ ] Notionワークスペース構成の確定（親ページ名・DB設計）
-- [ ] Looker StudioのGCPアカウント連携確認
 - [ ] dbt Cloudを使うか dbt Core + GitHub Actionsのみかの最終確認（→ GitHub Actionsで確定）
 - [ ] GCPプロジェクト名の決定
