@@ -29,27 +29,84 @@ def load_summary_kpi() -> pd.DataFrame:
 
 
 def load_category_monthly() -> pd.DataFrame:
-    """Raw monthly revenue/orders per category (for client-side filtering)."""
+    """Raw monthly revenue/orders/customers per category (for client-side filtering)."""
     return run_query(f"""
         SELECT
             product_category_name_english,
             order_month,
             sum_price_month,
-            cnt_orders_month
+            cnt_orders_month,
+            cnt_unique_customers_month
         FROM `{PROJECT}.{DS_APP}.app_category_performance`
         ORDER BY order_month
     """)
 
 
 def load_geo_monthly() -> pd.DataFrame:
-    """Raw monthly orders/revenue per state (for client-side filtering)."""
+    """Raw monthly orders/revenue/customers per state (for client-side filtering)."""
     return run_query(f"""
         SELECT
             customer_state,
             state_name_en,
             order_month,
             cnt_orders_month,
-            sum_price_month
+            sum_price_month,
+            cnt_unique_customers_month
         FROM `{PROJECT}.{DS_APP}.app_geo_summary`
         ORDER BY order_month
+    """)
+
+
+def load_category_customer_kpi() -> pd.DataFrame:
+    """Monthly repeat-rate KPI per category (for KPI cards when category filter applied)."""
+    return run_query(f"""
+        SELECT
+            product_category_name_english,
+            order_month,
+            cnt_unique_customers_month,
+            cnt_repeat_customers_month,
+            repeat_customer_rate_month
+        FROM `{PROJECT}.{DS_APP}.app_category_customer_kpi`
+        ORDER BY order_month
+    """)
+
+
+def load_state_customer_kpi() -> pd.DataFrame:
+    """Monthly repeat-rate KPI per state (for KPI cards when state filter applied).
+    Joins with app_geo_summary to include state_name_en for slicer matching."""
+    return run_query(f"""
+        SELECT
+            k.customer_state,
+            g.state_name_en,
+            k.order_month,
+            k.cnt_unique_customers_month,
+            k.cnt_repeat_customers_month,
+            k.repeat_customer_rate_month
+        FROM `{PROJECT}.{DS_APP}.app_state_customer_kpi` k
+        LEFT JOIN (
+            SELECT DISTINCT customer_state, state_name_en
+            FROM `{PROJECT}.{DS_APP}.app_geo_summary`
+        ) g USING (customer_state)
+        ORDER BY k.order_month
+    """)
+
+
+def load_cross_monthly() -> pd.DataFrame:
+    """Category × State × Month cross table for universal slicer filtering.
+    Joins with app_geo_summary to guarantee state_name_en is consistent
+    with load_geo_monthly() (same source, same values as slicer options)."""
+    return run_query(f"""
+        SELECT
+            c.product_category_name_english,
+            c.customer_state,
+            g.state_name_en,
+            c.order_month,
+            c.sum_price_month,
+            c.cnt_orders_month
+        FROM `{PROJECT}.{DS_APP}.app_cross_monthly` c
+        LEFT JOIN (
+            SELECT DISTINCT customer_state, state_name_en
+            FROM `{PROJECT}.{DS_APP}.app_geo_summary`
+        ) g USING (customer_state)
+        ORDER BY c.order_month
     """)

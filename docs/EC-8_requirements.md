@@ -53,6 +53,8 @@
 
 ```
 Page 1: サマリ（概況）              ← app_summary_kpi
+                                    ← app_category_customer_kpi（カテゴリフィルター時の顧客KPI）
+                                    ← app_state_customer_kpi   （州フィルター時の顧客KPI）
 Page 2: 売上・トレンド分析          ← app_sales_trend
 Page 3: 顧客分析（RFMセグメント）   ← app_customer_rfm
 Page 4: 顧客分析（コホートリテンション） ← app_cohort_retention
@@ -82,6 +84,8 @@ Page 11: 時間帯・曜日分析（ヒートマップ） ← app_hourly_kpi
 | `app_daily_kpi` | 日次トレンド分析 | `unf_order_items` | 日次 | 612行 |
 | `app_daily_category` | カテゴリ別日次時系列 | `unf_order_items` | カテゴリ × 日次 | 18,800行 |
 | `app_hourly_kpi` | 時間帯・曜日分析 | `unf_order_items` | 時間帯 × 曜日 | 168行 |
+| `app_category_customer_kpi` | サマリ補助（カテゴリフィルター時） | `unf_order_items` | カテゴリ × 月次 | 1,200行 |
+| `app_state_customer_kpi` | サマリ補助（州フィルター時） | `unf_order_items` | 州 × 月次 | 556行 |
 
 ---
 

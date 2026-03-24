@@ -241,3 +241,84 @@ models:
         description: "オンタイム配送フラグ"
       - name: is_repeat_customer
         description: "リピーター顧客フラグ（注文数 > 1）"
+
+  # ---------------------------------------------------------------------------
+  # カテゴリ・州フィルター適用時の顧客 KPI 補助テーブル
+  # ---------------------------------------------------------------------------
+
+  - name: app_category_customer_kpi
+    description: |
+      カテゴリフィルター適用時のダッシュボード KPI カード（顧客指標）補助テーブル。
+      粒度: 1行 = 1カテゴリ × 1年月。
+      ソース: unf_order_items（03_unification）。
+      用途: Streamlit ダッシュボードでカテゴリフィルター時に
+            ユニーク顧客数・リピート率を表示するために使用。
+      リピート顧客定義: 当月このカテゴリで購入した顧客のうち、
+                        同カテゴリで過去月にも購入実績がある顧客。
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - product_category_name_english
+              - year_month
+    columns:
+      - name: product_category_name_english
+        description: "商品カテゴリ名（英語）"
+        tests:
+          - not_null
+      - name: year_month
+        description: "年月（YYYY-MM形式）"
+        tests:
+          - not_null
+      - name: order_month
+        description: "年月（DATE型、月初日）"
+        tests:
+          - not_null
+      - name: cnt_unique_customers_month
+        description: "当月このカテゴリで購入したユニーク顧客数"
+        tests:
+          - not_null
+      - name: cnt_repeat_customers_month
+        description: "当月このカテゴリで購入したうち過去に同カテゴリ購入済みの顧客数"
+        tests:
+          - not_null
+      - name: repeat_customer_rate_month
+        description: "リピート率 = cnt_repeat / cnt_unique（SAFE_DIVIDE）。初月は 0.0。"
+
+  - name: app_state_customer_kpi
+    description: |
+      州フィルター適用時のダッシュボード KPI カード（顧客指標）補助テーブル。
+      粒度: 1行 = 1州 × 1年月。
+      ソース: unf_order_items（03_unification）。
+      用途: Streamlit ダッシュボードで州フィルター時に
+            ユニーク顧客数・リピート率を表示するために使用。
+      リピート顧客定義: 当月この州の顧客のうち、全体初回購入月 < 当月 の顧客（州問わず）。
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - customer_state
+              - year_month
+    columns:
+      - name: customer_state
+        description: "顧客住所の州コード（2文字, 例: SP）"
+        tests:
+          - not_null
+      - name: year_month
+        description: "年月（YYYY-MM形式）"
+        tests:
+          - not_null
+      - name: order_month
+        description: "年月（DATE型、月初日）"
+        tests:
+          - not_null
+      - name: cnt_unique_customers_month
+        description: "当月この州で購入したユニーク顧客数"
+        tests:
+          - not_null
+      - name: cnt_repeat_customers_month
+        description: "当月この州の顧客のうち過去購入済みのリピーター数"
+        tests:
+          - not_null
+      - name: repeat_customer_rate_month
+        description: "リピート率 = cnt_repeat / cnt_unique（SAFE_DIVIDE）。初月は 0.0。"
