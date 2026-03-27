@@ -427,6 +427,7 @@ with st.spinner("Loading data..."):
                df_cat_cust, df_state_cust, df_cross_all]:
         df["order_month"] = pd.to_datetime(df["order_month"])
 
+
 # ── Available filter options ─────────────────
 available_years = sorted(df_kpi_all["order_month"].dt.year.unique().tolist(), reverse=True)
 latest_year     = available_years[0]

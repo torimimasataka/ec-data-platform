@@ -1,6 +1,6 @@
 # EC-10: Streamlit サマリダッシュボード 設計仕様書
 
-> **ステータス:** 実装中（ブラッシュアップ中）
+> **ステータス:** Page 1 実装完了
 > **対象ページ:** Page 1 - サマリ（概況）
 > **実装ファイル:** `streamlit_app/app.py` / `streamlit_app/utils/bigquery.py`
 > **データソース:** `05_application` レイヤー（下記テーブル一覧参照）
@@ -73,9 +73,11 @@
 | `load_geo_monthly()` | `app_geo_summary` | `customer_state`, `state_name_en`, `order_month`, `cnt_orders_month`, `sum_price_month`, `cnt_unique_customers_month` |
 | `load_category_customer_kpi()` | `app_category_customer_kpi` | `product_category_name_english`, `order_month`, `cnt_unique_customers_month`, `cnt_repeat_customers_month`, `repeat_customer_rate_month` |
 | `load_state_customer_kpi()` | `app_state_customer_kpi` + `app_geo_summary`（JOIN） | `customer_state`, `state_name_en`, `order_month`, `cnt_unique_customers_month`, `cnt_repeat_customers_month`, `repeat_customer_rate_month` |
-| `load_cross_monthly()` | `app_cross_monthly` + `app_geo_summary`（JOIN） | `product_category_name_english`, `customer_state`, `state_name_en`, `order_month`, `sum_price_month`, `cnt_orders_month` |
+| `load_cross_monthly()` | `app_cross_monthly` | `product_category_name_english`, `customer_state`, `state_name_en`, `DATE(order_month)`, `sum_price_month`, `cnt_orders_month` |
 
-> `app_cross_monthly` はカテゴリ × 州の同時フィルター時に使用するクロステーブル（EC-8要件定義に追記要）
+> `app_cross_monthly` はカテゴリ × 州の同時フィルター時に使用するクロステーブル。
+> `state_name_en` はテーブル内に直接保持（dbt ビルド時に JOIN 済み）。
+> `order_month` は BigQuery 上 TIMESTAMP（UTC）型のため、クエリ側で `DATE()` キャストして `app_summary_kpi`（DATE型）との `.isin()` 比較を正常化している。
 
 ---
 
@@ -222,5 +224,7 @@
 - [x] ドーナツグラフ 2枚（カテゴリ売上シェア / 州注文シェア）
 - [x] スクロール位置保持（JS注入）
 - [x] カテゴリ×州クロスフィルター対応（`app_cross_monthly`）
+- [x] ユニバーサルスライサーのバグ修正（クロスフィルター時に相手軸チャートが空白になる問題）
+  - 原因1: `app_cross_monthly.order_month` が TIMESTAMP（UTC）型 vs `app_summary_kpi.order_month` が DATE型 → 型不一致で `.isin()` が全 False になりクロステーブルが常に空。`DATE()` キャストで解決。
+  - 原因2: `app_geo_summary` と `app_cross_monthly` の `state_name_en` スペル不一致（`Amapa` vs `Amapá` 等）→ `app_geo_summary` 側を `app_cross_monthly` に合わせてアクセント付きに統一し dbt 再ビルド。
 - [ ] レビュースコア折れ線（フィルターなし時に表示するか検討中）
-- [ ] ページ全体のブラッシュアップ継続中

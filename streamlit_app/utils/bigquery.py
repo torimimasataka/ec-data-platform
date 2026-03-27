@@ -93,20 +93,16 @@ def load_state_customer_kpi() -> pd.DataFrame:
 
 def load_cross_monthly() -> pd.DataFrame:
     """Category × State × Month cross table for universal slicer filtering.
-    Joins with app_geo_summary to guarantee state_name_en is consistent
-    with load_geo_monthly() (same source, same values as slicer options)."""
+    state_name_en is not fetched here — it is mapped in Python using the
+    canonical geo data (app_geo_summary) after loading."""
     return run_query(f"""
         SELECT
-            c.product_category_name_english,
-            c.customer_state,
-            g.state_name_en,
-            c.order_month,
-            c.sum_price_month,
-            c.cnt_orders_month
-        FROM `{PROJECT}.{DS_APP}.app_cross_monthly` c
-        LEFT JOIN (
-            SELECT DISTINCT customer_state, state_name_en
-            FROM `{PROJECT}.{DS_APP}.app_geo_summary`
-        ) g USING (customer_state)
-        ORDER BY c.order_month
+            product_category_name_english,
+            customer_state,
+            state_name_en,
+            DATE(order_month) AS order_month,
+            sum_price_month,
+            cnt_orders_month
+        FROM `{PROJECT}.{DS_APP}.app_cross_monthly`
+        ORDER BY order_month
     """)
